@@ -33,11 +33,9 @@ def get_data():
 
 def get_county(start,days,county_code = 1001):
     
-    county_confirmed = us_confirmed_df.loc[us_confirmed_df.FIPS == county_code]
-    .drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
+    county_confirmed = us_confirmed_df.loc[us_confirmed_df.FIPS == county_code].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
            'Country_Region', 'Lat', 'Long_', 'Combined_Key'],axis=1).sum(axis=0).values
-    county_death = us_death_df.loc[us_death_df.FIPS == county_code].
-    drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
+    county_death = us_death_df.loc[us_death_df.FIPS == county_code].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
            'Country_Region', 'Lat', 'Long_', 'Combined_Key',"Population"],axis=1).sum(axis=0).values
     county_population = us_death_df.loc[us_death_df.FIPS ==county_code].Population.sum()
     county_infected = county_confirmed
@@ -48,10 +46,8 @@ def get_state(start,days,state_name = "Washington"):
     
     county_confirmed = us_confirmed_df.loc[us_confirmed_df.Province_State == state_name].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
            'Country_Region', 'Lat', 'Long_', 'Combined_Key'],axis=1).sum(axis=0).values
-    county_death = us_death_df.loc[us_death_df.Province_State == state_name].
-    drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
-           'Country_Region', 'Lat', 'Long_', 'Combined_Key',"Population"],axis=1).
-    sum(axis=0).values
+    county_death = us_death_df.loc[us_death_df.Province_State == state_name].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
+           'Country_Region', 'Lat', 'Long_', 'Combined_Key',"Population"],axis=1).sum(axis=0).values
     county_population = us_death_df.loc[us_death_df.Province_State ==state_name].Population.sum()
     county_infected = county_confirmed
     county_removed = county_death
@@ -59,11 +55,9 @@ def get_state(start,days,state_name = "Washington"):
     return county_susceptible[start:start + days],county_infected[start:start + days],county_removed[start:days+start],county_population
 def get_country(start,days,country_name = "US"):
     
-    county_confirmed = us_confirmed_df.loc[us_confirmed_df.Country_Region == country_name].
-    drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
+    county_confirmed = us_confirmed_df.loc[us_confirmed_df.Country_Region == country_name].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
            'Country_Region', 'Lat', 'Long_', 'Combined_Key'],axis=1).sum(axis=0).values
-    county_death = us_death_df.loc[us_death_df.Country_Region == country_name].
-    drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
+    county_death = us_death_df.loc[us_death_df.Country_Region == country_name].drop(['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State',
            'Country_Region', 'Lat', 'Long_', 'Combined_Key',"Population"],axis=1).sum(axis=0).values
     county_population = us_death_df.loc[us_death_df.Country_Region ==country_name].Population.sum()
     country_recovered = global_recover_df.loc[global_recover_df["Country/Region"] == country_name].drop(
