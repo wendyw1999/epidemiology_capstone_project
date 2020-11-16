@@ -15,7 +15,7 @@ def calculate_gradient(s,i,r,population,beta,epsilon):
         result2 += 2*(r[n+1]-r[n]-i[n]*epsilon)*(-i[n])
         
     return result1,result2
-def calculate(s,i,r,population,learning_rate1,learning_rate2):
+def calculate(s,i,r,population,learning_rate1,learning_rate2,iterations):
     beta = 0.2
     epsilon = 1/14
     
@@ -24,7 +24,7 @@ def calculate(s,i,r,population,learning_rate1,learning_rate2):
     betas = []
     ds = []
     
-    for itera in range(1000): # do it for 10 iterations.
+    for itera in range(iterations): # do it for 10 iterations.
         
         loss1,loss2 = calculate_gradient(s,i,r,population,beta,epsilon)
         beta_new = beta - learning_rate1* loss1/length #0.001 is the learning rate
