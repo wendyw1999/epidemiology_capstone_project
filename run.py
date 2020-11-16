@@ -29,9 +29,9 @@ def main(targets):
         elif admin_level == "country":
             s,i,r,p = get_country(start,days,admin_level,admin_name)
         write_list_to_txt("data/temp/s.txt",s)
-        write_list_to_txt("data/temp/s.txt",i)
-        write_list_to_txt("data/temp/s.txt",r)
-        write_list_to_txt("data/temp/s.txt",[p])
+        write_list_to_txt("data/temp/i.txt",i)
+        write_list_to_txt("data/temp/r.txt",r)
+        write_list_to_txt("data/temp/p.txt",[p])
         
     if 'model' in targets:
         #calculate m stats here
@@ -49,7 +49,6 @@ def main(targets):
             i = f.read().split("\n")
         with open("data/temp/r.txt","r") as f:
             r = f.read().split("\n")
-
         with open("data/temp/p.txt","r") as f:
             p = f.read().split("\n")[0]
                    
