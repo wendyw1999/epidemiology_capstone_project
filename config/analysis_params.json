@@ -1,0 +1,4 @@
+{
+    "img_path":["data/county_boundry","data/state_boundry"],
+    "visualization" : "notebook/eda_report.ipynb"
+}

@@ -1,14 +1,18 @@
 # Pull data from repositories and store in temp.
 import sys
 import os
-from all_function import *
+#sys.path.append('./src/')
+#from all_function import *
 import json
 
 def main(targets):
     if 'data' in targets:
+        with open ('src/etl.py') as fh:
+            print('Load in dataset')
         
         with open('config/data-params.json') as fh:
             data_cfg =json.load(fh)
+
         
 
     if 'eda' in targets:
@@ -21,6 +25,7 @@ def main(targets):
         #calculate m stats here
         with open('config/model-params.json') as fh:
             model_cfg = json.load(fh)
+        
             
 
     return
