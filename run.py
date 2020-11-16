@@ -1,16 +1,30 @@
 # Pull data from repositories and store in temp.
 import sys
-from src.data.etl import download_data,clean_data
-from src.analysis.analysis import read_txts
+import os
+from all_function import *
 import json
-if __name__ == "__main__":
-    command = sys.argv[1]
-    
-    if command == "data":
-      
-        with open("config/data-params.json", "r") as read_file:
-            data_param= json.load(read_file)  
-        print("Retrieving Data...")
-        download_data(data_param)
+
+def main(targets):
+    if 'data' in targets:
         
+        with open('config/data-params.json') as fh:
+            data_cfg =json.load(fh)
+        
+
+    if 'eda' in targets:
+        with open('config/analysis-params.json') as fh:
+            eda_cfg =json.load(fh)
+            
+            
     
+    if 'model' in targets:
+        #calculate m stats here
+        with open('config/model-params.json') as fh:
+            model_cfg = json.load(fh)
+            
+
+    return
+
+if __name__ == "__main__":
+    targets=sys.argv[1: ]
+    main(targets)
