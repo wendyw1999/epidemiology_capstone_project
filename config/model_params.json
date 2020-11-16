@@ -1,6 +1,7 @@
 {
     "input_data":["data/tempt/global_recover.csv","data/tempt/mobility.csv","data/tempt/us_confirmed.csv","data/tempt/us_susceptible.csv"],
     "output_data": ["data/tempt/us_infected.txt","data/tempt/us_population.txt","data/tempt/us_removed.txt","data/tempt/us_susceptible.txt"],
-    "learning_rate":0.001,
+    "learning_rate_beta":0.001,
+    "learning_rate_d":0.001
     "iterations":1000
 }
