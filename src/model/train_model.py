@@ -27,18 +27,19 @@ def build_model(path):
         model_cfg = json.load(fh)
 
     iterations = model_cfg["iterations"]
-    iterations = 10000
+
     learning_rate1 = 1e-3/p * 60
     learning_rate2 = 1e-3/p * 60
-    betas,d = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)
+    betas,d = tune_learning_rate(s,i,r,p,learning_rate1,learning_rate2,iterations)
     return betas,d
     
     
-def tune_learning_rate(s,i,r,p,iterations):
-    learning_rate1 = 1e-3/p * 60
-    learning_rate2 = 1e-3/p * 60
+def tune_learning_rate(s,i,r,p,learning_rate1,learning_rate2,iterations):
+    learning_rate1 = 1000/p
+    learning_rate2 = 1000/p
     betas = []
     ds = []
+    betas,ds = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)
     while isinstance(betas,list) and isinstance(ds,list):
         learning_rate1 = learning_rate1/10
         learning_rate2 = learning_rate2/10
