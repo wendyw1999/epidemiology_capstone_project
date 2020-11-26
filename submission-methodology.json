@@ -4,5 +4,5 @@
     "library": ["src"], 
     "notebook": ["notebooks/Stimulation2.ipynb"],
     "targets": ["data", "eda", "model","test"] 
-    "dockerhub-id":"shuyuan66/dsc180a-methodology-4"
+    "dockerhub-id": "shuyuan66/dsc180a-methodology-4:latest",
 }
