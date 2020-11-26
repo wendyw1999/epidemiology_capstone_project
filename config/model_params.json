@@ -3,5 +3,5 @@
     "output_data": ["data/tempt/us_infected.txt","data/tempt/us_population.txt","data/tempt/us_removed.txt","data/tempt/us_susceptible.txt"],
     "learning_rate_beta":0.001,
     "learning_rate_d":0.001,
-    "iterations":1000
+    "iterations":10000
 }
