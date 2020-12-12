@@ -18,6 +18,10 @@ def main(targets):
         collect_data(path)
         print("Done downloading data to :"+path)
     if "test" in targets:
+        if not os.path.exists('test'):
+            os.makedirs('test')
+        if not os.path.exists('test/testdata'):
+            os.makedirs("test/testdata")
         #collect data
         collect_data("test/testdata/")
         print("done downloading data")
