@@ -18,12 +18,21 @@ def main(targets):
         collect_data(path)
         print("Done downloading data to :"+path)
     if "test" in targets:
+        #collect data
         collect_data("test/testdata/")
         print("done downloading data")
+        
+        #fitting the model
         beta,d = build_model("test/testdata/")
         print("beta is:  "+str(beta))
         print("D is :   "+str(d))
-        draw_ODE("test/testdata/","test/",beta,d) #Generate a plot in the test  folder from data in the test/testdata folder
+        
+        #Analysis and ploting
+        with open('config/analysis_params.json') as fh:
+            eda_cfg =json.load(fh)
+        data_path = eda_cfg["data_path"]
+        output_path = eda_cfg["img_path"]
+        draw_ODE(data_path,output_path,beta,d) #Generate a plot in the test  folder from data in the test/testdata folder
         
     if 'model' in targets:
         #calculate m stats here
@@ -33,9 +42,8 @@ def main(targets):
               
         
             
-    if 'eda' in targets:
-        with open('config/analysis-params.json') as fh:
-            eda_cfg =json.load(fh)
+    #if 'eda' in targets:
+        
 
     return
 

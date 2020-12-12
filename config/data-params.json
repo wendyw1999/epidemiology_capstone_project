@@ -3,7 +3,7 @@
 "global_recover_df":"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
 "mobility":"https://raw.githubusercontent.com/descarteslabs/DL-COVID-19/master/DL-us-m50.csv",
  "start":30,
- "days":30,
+ "days":40,
  "admin_level":"country",
  "admin_name":"US"
 }

@@ -5,6 +5,13 @@ import matplotlib.pyplot as plt
 import json
 from numpy import linalg as LA
 def build_model(path):
+    '''
+    the overall method that will collect data from local files, and read params from json file, and do the model training
+    path: takes in the path where the s,i,r,p text files are located (a folder name)
+    returns: model parameters beta and d
+    beta is the infection rate
+    d is the infectious duration
+    '''
     
     s_path = path+"s.txt"
     i_path = path+"i.txt"
@@ -35,6 +42,9 @@ def build_model(path):
     return betas,d
     
 def calculate_hessian(s,i,r,population):
+    '''
+    create hessian matrix (second derivatives of beta and d)
+    '''
     result_beta_second = 0
     result_epsilon_second = 0
     result_both_second = 0
@@ -45,6 +55,9 @@ def calculate_hessian(s,i,r,population):
     return result_beta_second/len(s),result_epsilon_second/len(s),result_both_second/len(s)
             
 def tune_learning_rate(s,i,r,p):
+    '''
+    calculate 0.1/eigenvalue of hessian matrix, our learning rate
+    '''
     
     top_left,bottom_right,the_other_two = calculate_hessian(s,i,r,p)
     w, v = LA.eigh(np.array([[top_left, the_other_two], [the_other_two, bottom_right]]))
@@ -52,6 +65,9 @@ def tune_learning_rate(s,i,r,p):
     return 0.1/lip_constant
 
 def calculate_gradient(s,i,r,population,beta,epsilon):
+    '''
+    get gradients at each iteration of gradient descent
+    '''
     result1 = 0 #continue adding to solve for beta
     result2 = 0 #continue adding to solve for 1/D aka epsilon
     for n in range(len(s)-1):
@@ -63,6 +79,11 @@ def calculate_gradient(s,i,r,population,beta,epsilon):
         
     return result1,result2
 def calculate(s,i,r,population,learning_rate,iterations):
+    '''
+    gradient descent method
+    returns: beta and d
+    we initialized beta to be 0.2 and D to 14 from existing knowledge so we can get to convergence faster
+    '''
     beta = 0.2
     epsilon = 1/14
     
@@ -77,7 +98,6 @@ def calculate(s,i,r,population,learning_rate,iterations):
         beta_new = beta - learning_rate* loss1/length #0.001 is the learning rate
         epsilon_new = epsilon - learning_rate * loss2/length
         if (beta_new == beta) & (epsilon_new == epsilon):
-            
             return beta_new,1/epsilon_new
            
         beta = beta_new

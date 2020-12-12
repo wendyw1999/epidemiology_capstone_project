@@ -6,6 +6,12 @@ import os
 import json
 
 def collect_data(path):
+    '''
+    a composite method that does everything! Collects the data and saves susceptible, infected, removed, and population
+    given the params in the data-params.json file
+    takes in the path where the person wants s,i,r,p to be stored
+    returns the name of the path (folder)
+    '''
     us_confirmed_df,us_death_df,global_recover_df,mobility = retrieve_data()
     with open('config/data-params.json') as fh:
         data_cfg =json.load(fh)
@@ -33,6 +39,8 @@ def collect_data(path):
 def retrieve_data():
     '''
     retrieves information from the JHU and mobility data repository
+    return a list of dataframes, including confirmed, death, recover (only global) and mobility data
+    these dataframe will be used for generating sequential data limited to a geographical location, with a time frame.
     '''
     url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv'
     us_confirmed_df = pd.read_csv(url, error_bad_lines=False)
@@ -59,6 +67,13 @@ def retrieve_data():
 
 
 def get_county(start,days,df_list,county_code = 1001):
+    '''
+    get county level data
+    start: starting day since patient 0 in Wuhan
+    days: duraton
+    df_list: the list of dataframes (confirmed, death, recovered, mobility)
+    county_code: FIP of the county, defatul to 1001
+    '''
     us_confirmed_df = df_list[0]
     us_death_df = df_list[1]
     global_recover_df = df_list[2]
@@ -73,6 +88,13 @@ def get_county(start,days,df_list,county_code = 1001):
     return county_susceptible[start:days+start],county_infected[start:start+days],county_removed[start:start+days],county_population
 
 def get_state(start,days,df_list,state_name = "Washington"):
+    '''
+    get state level data
+    start: starting day since patient 0 in Wuhan
+    days: duraton of sequential data
+    df_list: the list of dataframes (confirmed, death, recovered, mobility)
+    county_code: FIP of the county, defatul to Washington since it is the first patient
+    '''
     us_confirmed_df = df_list[0]
     us_death_df = df_list[1]
     global_recover_df = df_list[2]    
@@ -86,6 +108,13 @@ def get_state(start,days,df_list,state_name = "Washington"):
     county_susceptible = county_population - county_infected
     return county_susceptible[start:start + days],county_infected[start:start + days],county_removed[start:days+start],county_population
 def get_country(start,days,df_list,country_name = "US"):
+    '''
+    get country level data
+    start: starting day since patient 0 in Wuhan
+    days: duraton of sequential data
+    df_list: the list of dataframes (confirmed, death, recovered, mobility)
+    county_code: FIP of the county, defatul to Washington since it is the first patient
+    '''
     us_confirmed_df = df_list[0]
     us_death_df = df_list[1]
     global_recover_df = df_list[2]   
@@ -102,6 +131,11 @@ def get_country(start,days,df_list,country_name = "US"):
     return county_susceptible[start:start+days],county_infected[start:start+days],county_removed[start:start+days],county_population
 
 def write_list_to_txt(filename,my_list):
+    '''
+    write sequential data into txt file for model building
+    filename: the output text file name. s,i,r, or p.txt
+    my_list: the sequential data to be written. 
+    '''
 
     with open(filename, 'w') as f:
         for item in my_list:
