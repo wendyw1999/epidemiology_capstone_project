@@ -10,7 +10,7 @@ from etl import *
 import json
 from src.data.etl import *
 from src.model.train_model import *
-
+from src.analysis.analysis import *
 
 def main(targets):
     if 'data' in targets:
@@ -23,6 +23,7 @@ def main(targets):
         beta,d = build_model("test/testdata/")
         print("beta is:  "+str(beta))
         print("D is :   "+str(d))
+        draw_ODE("test/testdata/","test/",beta,d) #Generate a plot in the test  folder from data in the test/testdata folder
         
     if 'model' in targets:
         #calculate m stats here
