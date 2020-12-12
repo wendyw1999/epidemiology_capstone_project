@@ -9,4 +9,7 @@
 infected number for future.
 - [TODO] Using Apple's mobility data, we are able to fit a Bayesian model and use the model to predict future number of infected with new lockdowns/un-lockdowns. 
 
-### raw data should be not be touched at all time!
+
+## Data should not be touched at all times!
+# Directions
+`python run.py test` to start

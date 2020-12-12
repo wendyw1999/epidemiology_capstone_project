@@ -8,12 +8,12 @@ import json
 def collect_data(path):
     '''
     a composite method that does everything! Collects the data and saves susceptible, infected, removed, and population
-    given the params in the data-params.json file
+    given the params in the config/data_params.json file
     takes in the path where the person wants s,i,r,p to be stored
     returns the name of the path (folder)
     '''
     us_confirmed_df,us_death_df,global_recover_df,mobility = retrieve_data()
-    with open('config/data-params.json') as fh:
+    with open('config/data_params.json') as fh:
         data_cfg =json.load(fh)
     start = data_cfg["start"]
     days = data_cfg["days"]
