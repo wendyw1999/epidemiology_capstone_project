@@ -1,7 +1,4 @@
 {
-    "config": ["config/data-params.json", "config/eda-params.json", "config/analysis-params.json"],
-    "build": "run.py",
-    "library": ["src"], 
-    "notebook": ["notebooks/Stimulation2.ipynb"],
-    "targets": ["data", "eda", "model"] 
+    "dockerhub-id": "caw062/test:latest",
+    "repository-id": "https://github.com/wendyw1999/template.git"
 }
