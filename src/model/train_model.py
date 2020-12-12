@@ -3,6 +3,7 @@ import numpy as np
 import scipy.linalg as la
 import matplotlib.pyplot as plt
 import json
+from numpy import linalg as LA
 def build_model(path):
     
     s_path = path+"s.txt"
@@ -28,29 +29,28 @@ def build_model(path):
 
     iterations = model_cfg["iterations"]
 
-    learning_rate1 = 1e-3/p * 60
-    learning_rate2 = 1e-3/p * 60
-    betas,d = tune_learning_rate(s,i,r,p,learning_rate1,learning_rate2,iterations)
+    
+    learning_rate = tune_learning_rate(s,i,r,p)
+    betas,d = calculate(s,i,r,p,learning_rate,iterations)
     return betas,d
     
+def calculate_hessian(s,i,r,population):
+    result_beta_second = 0
+    result_epsilon_second = 0
+    result_both_second = 0
+    for n in range(len(s)-1):
+        result_beta_second += 4*(s[n] * i[n]/population) **2 
+        result_epsilon_second += 4*i[n]
+        result_both_second += -2*s[n]*i[n]**2/population
+    return result_beta_second/len(s),result_epsilon_second/len(s),result_both_second/len(s)
+            
+def tune_learning_rate(s,i,r,p):
     
-def tune_learning_rate(s,i,r,p,learning_rate1,learning_rate2,iterations):
-    learning_rate1 = 1000/p
-    learning_rate2 = 1000/p
-    betas = []
-    ds = []
-    betas,ds = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)
-    while isinstance(betas,list) and isinstance(ds,list):
-        learning_rate1 = learning_rate1/10
-        learning_rate2 = learning_rate2/10
-        betas,ds = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)
-    while isinstance(ds,list):
-        learning_rate2 = learning_rate2/10
-        betas,ds = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)
-    while isinstance(ds,list):
-        learning_rate1 = learning_rate1/10
-        betas,ds = calculate(s,i,r,p,learning_rate1,learning_rate2,iterations)   
-    return betas,ds
+    top_left,bottom_right,the_other_two = calculate_hessian(s,i,r,p)
+    w, v = LA.eigh(np.array([[top_left, the_other_two], [the_other_two, bottom_right]]))
+    lip_constant = w[w>0][0]
+    return 0.1/lip_constant
+
 def calculate_gradient(s,i,r,population,beta,epsilon):
     result1 = 0 #continue adding to solve for beta
     result2 = 0 #continue adding to solve for 1/D aka epsilon
@@ -62,7 +62,7 @@ def calculate_gradient(s,i,r,population,beta,epsilon):
         result2 += 2*(r[n+1]-r[n]-i[n]*epsilon)*(-i[n])
         
     return result1,result2
-def calculate(s,i,r,population,learning_rate1,learning_rate2,iterations):
+def calculate(s,i,r,population,learning_rate,iterations):
     beta = 0.2
     epsilon = 1/14
     
@@ -74,8 +74,8 @@ def calculate(s,i,r,population,learning_rate1,learning_rate2,iterations):
     for itera in range(iterations): # do it for 10 iterations.
         
         loss1,loss2 = calculate_gradient(s,i,r,population,beta,epsilon)
-        beta_new = beta - learning_rate1* loss1/length #0.001 is the learning rate
-        epsilon_new = epsilon - learning_rate2 * loss2/length
+        beta_new = beta - learning_rate* loss1/length #0.001 is the learning rate
+        epsilon_new = epsilon - learning_rate * loss2/length
         if (beta_new == beta) & (epsilon_new == epsilon):
             
             return beta_new,1/epsilon_new
@@ -85,6 +85,6 @@ def calculate(s,i,r,population,learning_rate1,learning_rate2,iterations):
         
         betas.append(beta)
         ds.append(1/epsilon)
-
+        
     return betas,ds
 
