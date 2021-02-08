@@ -1,4 +1,4 @@
 {
-    "img_path":"test/comparison.png",
-    "data_path":"test/testdata/"
+    "test_img_path":"test/comparison.png",
+    "test_data_path":"test/testdata/"
 }

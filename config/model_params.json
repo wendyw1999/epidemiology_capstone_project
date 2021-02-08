@@ -3,5 +3,9 @@
     "output_data": ["data/tempt/us_infected.txt","data/tempt/us_population.txt","data/tempt/us_removed.txt","data/tempt/us_susceptible.txt"],
     "learning_rate_beta":0.001,
     "learning_rate_d":0.001,
-    "iterations":10000
+    "iterations":10000,
+    "curr_day":"1/21/21",
+    "prediction_day":"1/22/21",
+    "test_beta":0.2,
+    "test_d":14
 }

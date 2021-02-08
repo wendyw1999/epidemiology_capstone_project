@@ -30,21 +30,21 @@ def read_txt(filename):
     with open(filename, 'r') as f:
         items = f.read().split("\n")
     return items
-def sim_fun_ODE(s,i,beta, N, D, int_steps, length):
+def sim_fun_ODE(s,infected,beta, N, D, int_steps, length):
     '''
     outputs the predicted susceptible and infected, as two lists
     '''
     S = np.zeros(length)
     I = np.zeros(length)
     S[0] = s[0]
-    I[0] = i[0]
+    I[0] = infected[0]
     dt = 1.0/int_steps
     for l in range(length-1):
         for i in range(int_steps):
             S[l] = S[l] - beta*I[l]/N*S[l]*dt
             I[l] = I[l] + (-I[l]/D + beta*I[l]/N*S[l])*dt
-    S[l+1] = S[l]
-    I[l+1] = I[l]
+        S[l+1] = S[l]
+        I[l+1] = I[l]
     return S, I
 
 def sim_fun_SDE(s,i,beta, N, D, int_steps, length):
@@ -78,9 +78,10 @@ def draw_ODE_from_data(output_path,s,i,r,p,beta,d,length,int_steps=1):
     #D = ds
     
     plt.scatter(y=i,x=range(0,len(i),1))
+    plt.savefig(output_path)
     S_ODE, I_ODE = sim_fun_ODE(s,i,beta, p, d, int_steps, length)
     S_SDE, I_SDE = sim_fun_SDE(s,i,beta, p, d, int_steps, length)
-    plt.plot(I_ODE,label='ODE result')
+    plt.plot(I_ODE,label='ODE Infected Predicion')
     #plt.plot(I_SDE,label='SDE result')
 
     plt.xlabel('Time (days)')

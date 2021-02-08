@@ -4,6 +4,9 @@ import scipy.linalg as la
 import matplotlib.pyplot as plt
 import json
 from numpy import linalg as LA
+import sys
+from src.data.etl import *
+
 def build_model(path):
     '''
     the overall method that will collect data from local files, and read params from json file, and do the model training
@@ -108,3 +111,94 @@ def calculate(s,i,r,population,learning_rate,iterations):
         
     return betas,ds
 
+def calculate_i_delta(infection,dic,county_name,us_confirmed_df):
+    for i in ["west","east","north","south"]:
+        if dic[county_name][i] == "border":
+            dic[county_name][i] = county_name
+    county_infection = infection[county_name]
+    lat_difference = calculate_lat_long_difference(dic[county_name]["west"],dic[county_name]["east"],us_confirmed_df)[0]
+    long_difference = calculate_lat_long_difference(dic[county_name]["north"],dic[county_name]["south"],us_confirmed_df)[1]
+    first_term = (infection[dic[county_name]["west"]] +infection[dic[county_name]["east"]]- 2*county_infection)/lat_difference**2
+    second_term = (infection[dic[county_name]["north"]]+infection[dic[county_name]["south"]] - 2*county_infection)/long_difference**2
+    return first_term + second_term
+
+def check_prediction(FIP_list,prediction_dic,us_confirmed_df,date):
+    df = us_confirmed_df.loc[us_confirmed_df.FIPS.isin(FIP_list)]
+    df["predicted"] = df["FIPS"].replace(prediction_dic).apply(lambda x:int(x))
+    df["percent_difference"] = (df["predicted"] - df[date]) / df[date]
+    return df[["Admin2",date,"predicted","percent_difference"]]
+def calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date): 
+    '''
+    dic: the dictionary containing neighboring county FIPs
+    county_name: the FIP of the county of interest
+    us_confirmed: dictionary containing infected case numbers for us to initialize our dictionary
+    t2_date: the previous day (our prediction is based on), so we can look up the infection stats from the confirmed df
+    '''
+    infected_dic = {}
+    for i in ["west","east","north","south"]:
+        if dic[county_name][i] == "border":
+            dic[county_name][i] = county_name
+        region_infected_t2 = us_confirmed_df.loc[us_confirmed_df.FIPS == dic[county_name][i]][t2_date].values[0]
+        infected_dic[i] = region_infected_t2
+    infected_dic["center"] = us_confirmed_df.loc[us_confirmed_df.FIPS == county_name][t2_date].values[0]
+    lat_difference = calculate_lat_long_difference(dic[county_name]["west"],dic[county_name]["east"],us_confirmed_df)[0]
+    long_difference = calculate_lat_long_difference(dic[county_name]["north"],dic[county_name]["south"],us_confirmed_df)[1]
+    first_term = (infected_dic["west"] + infected_dic["east"] - 2*infected_dic["center"])/lat_difference**2
+    second_term = (infected_dic["north"]+infected_dic["south"] - 2*infected_dic["center"])/long_difference**2
+    return first_term + second_term
+
+
+def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df,n=10):
+    '''
+    t2_date: date of the previous day
+    dic: dictionary containing each county's four neighboring counties. e.g. dic["San Diego"]["east"] = "Imperial"
+    beta: 0.2
+    d: 14
+    '''
+    dic_predictions = {}
+    mobility_dic = {}
+    population_dic = {}
+
+    dt = 1.0/n
+    
+    #initialization, initialize the dictionary, the values will be the infected cases in t2
+    for county_name in dic.keys():
+        infected_t2 =  us_confirmed_df.loc[us_confirmed_df.FIPS == county_name][t2_date].values[0]
+        m_t2 = us_mobility_df.loc[us_mobility_df.FIPS == county_name][t2_date].values[0]
+        mobility_dic[county_name] = m_t2
+        
+        #death_t2 = us_death_df.loc[us_death_df.FIPS == county_name][t2_date].values[0]
+        population = find_population_for_county(county_name,us_death_df)
+        population_dic[county_name] = population
+        s_t2 = population - infected_t2
+        
+        first_term = infected_t2 #previous day number, infected number at t0
+        
+    
+        second_term = -infected_t2/d
+        third_term = beta * (infected_t2/population) * s_t2
+        fourth_term = calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date) * m_t2
+        dic_predictions[county_name] = sum([first_term,sum([second_term,third_term,fourth_term])*dt])
+    for i in range(n-1):
+        def calculate_for_dt(dic_predictions,population_dict,mobility_dict,d,beta):
+            for county_name in dic_predictions.keys():
+                infected_prev = dic_predictions[county_name]
+                m = mobility_dict[county_name]
+                population = population_dict[county_name]
+                s = population - infected_prev
+                first_term = infected_prev #t(n-1) infected number of the previous t
+                second_term = -infected_prev/d
+                third_term = beta * (infected_prev/population) * s
+                fourth_term = calculate_i_delta(dic_predictions,dic,county_name,us_confirmed_df) * m
+                fourth_term = 0
+                dic_predictions[county_name] = sum([first_term,sum([second_term,third_term,fourth_term])*dt])
+            return dic_predictions
+        dic_predictions = calculate_for_dt(dic_predictions,population_dic,mobility_dic,d,beta)
+        #calculate_for_dt, run for n-1 times
+        
+    
+    
+    
+    return dic_predictions
+    #didn't have data for recovered
+        

@@ -4,6 +4,85 @@ import scipy.linalg as la
 import matplotlib.pyplot as plt
 import os
 import json
+from datetime import datetime
+
+
+def find_FIPs(county_name,us_confirmed_df,state_name = "California"):
+    fips = us_confirmed_df[(us_confirmed_df.Admin2 == county_name) & (us_confirmed_df.Province_State == state_name)]["FIPS"].values[0]
+    return str(fips)
+def generate_sc_neighbor_dictionary(us_confirmed_df):
+    '''
+    return a dictionary of southern california counties,county FIP code being the key
+    each value will be another dictionary, in the order of west,east,north, and south
+    '''
+    # main key = center county
+    dic = {}
+    # inner keys: west,east,north,south
+    dic["San Bernardino"] = {"west":"Kern","east":"border","north":"border","south":"Riverside"}
+
+    dic["Kern"] = {"west":"San Luis Obispo","east":"San Bernardino","north":"border","south":"Los Angeles"}
+
+    dic["San Luis Obispo"] = {"west":"border","east":"Kern","north":"border","south":"Santa Barbara"}
+
+    dic["Santa Barbara"] = {"west":"border","east":"Ventura","north":"San Luis Obispo","south":"border"}
+
+
+    dic["Ventura"] = {"west":"Santa Barbara","east":"Los Angeles","north":"Kern","south":"border"}
+
+    #Los Angeles County
+    dic["Los Angeles"] = {"west":"Ventura","east":"San Bernardino","north":"Kern","south":"Orange"}
+    #Orange County
+    dic['Orange'] = {"west": "border", "east": "Riverside","north":"Los Angeles", "south": "San Diego"}
+
+    # Riverside County
+    dic['Riverside'] = {'west':"Orange",'east':"border",'north':"San Bernardino", 'south':"San Diego"}
+    # San Diego County
+    dic['San Diego']={'west':"border",'east':"Imperial","north":'Riverside',"south":"border"}
+    # Imperial County
+    dic['Imperial']={'west':"San Diego",'east':"border","north":'Riverside',"south":"border"}
+    
+    fips_neighbor_dict = {}
+    for i in dic.keys():
+
+        new_key = find_FIPs(i,us_confirmed_df)
+        fips_neighbor_dict[new_key] = dic[i]
+        for k in dic[i].keys():
+            if dic[i][k] == "border":
+                continue
+            fips_neighbor_dict[new_key][k] = find_FIPs(dic[i][k],us_confirmed_df)
+    return fips_neighbor_dict
+
+
+def find_population_for_county(county_FIPS,us_death_df):
+    population_df = us_death_df[us_death_df.columns[:12]]
+
+    return population_df.loc[population_df.FIPS == county_FIPS]["Population"].values[0]
+
+def calculate_lat_long_difference(county_FIP1,county_FIP2,us_confirmed_df):
+    '''
+    returns a tuple, where the first entry is the difference in lat
+    the second entry is the difference in long
+    '''
+    lat_1 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP1]["Lat"].values[0]
+    long_1 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP1]["Long_"].values[0]
+    lat_2 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP2]["Lat"].values[0]
+    long_2 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP2]["Long_"].values[0]
+    return (lat_1-lat_2,long_1-long_2)
+def FIP_to_county_name(FIP,us_confirmed_df):
+    df = us_confirmed_df.loc[us_confirmed_df.FIPS == FIP]
+    county = df.Admin2.values[0]
+    state = df.Province_State.values[0]
+    return county+", "+state
+
+def interpret_dictionary_FIP(FIP_dict,us_confirmed_df):
+    li = list(FIP_dict.keys())
+    for i in range(len(li)):
+
+        key = li[i]
+        new_key = FIP_to_county_name(key,us_confirmed_df)
+        FIP_dict[new_key] = FIP_dict[key]
+        del FIP_dict[key]
+    return FIP_dict
 
 def collect_data(path):
     '''
@@ -35,7 +114,12 @@ def collect_data(path):
     write_list_to_txt(r_path,r)
     write_list_to_txt(p_path,[p])
     return path
-    
+def standardize_FIPS(df):
+    '''
+    return: dataframe after changing the FIP code from float to string (zfilled) to standardize
+    '''
+    df["FIPS"] = df.loc[~df.FIPS.isna()].FIPS.apply(lambda x:str(int(x)).zfill(5))
+    return df
 def retrieve_data():
     '''
     retrieves information from the JHU and mobility data repository
@@ -57,12 +141,39 @@ def retrieve_data():
 
     url = "https://raw.githubusercontent.com/descarteslabs/DL-COVID-19/master/DL-us-m50.csv"
     mobility = pd.read_csv(url, error_bad_lines=False)
-
+    mobility_standardized = standardize_mobility_df(mobility)
+    mobility_standardized = standardize_FIPS(mobility_standardized)
+    
     us_confirmed_df = us_confirmed_df.loc[us_confirmed_df.Admin2 != "Unassigned"]
+    us_confirmed_df = standardize_FIPS(us_confirmed_df)
+    
     us_death_df = us_death_df.loc[us_death_df.Admin2 != "Unassigned"]
-    return us_confirmed_df,us_death_df,global_recover_df,mobility
+    us_death_df = standardize_FIPS(us_death_df)
 
+    return us_confirmed_df,us_death_df,global_recover_df,mobility_standardized
 
+def standardize_mobility_df(mobility_df):
+    mobility_standardized = change_col_name(mobility_df) 
+    return mobility_standardized
+def change_col_name(df):
+    columns_dict = {}
+    df.columns = [i.capitalize() for i in df.columns]
+    
+    for i in range(len(df.columns)):
+        col = df.columns[i]
+        if col == "Fips":
+            columns_dict[col] = "FIPS"
+        if (col.split("-")[0] == "2020") | (col.split("-")[0] == "2021"):
+            date_time_obj = datetime.strptime(col, '%Y-%m-%d')
+            date_time_str = date_time_obj.strftime("%-m/%-d/%y")
+            columns_dict[col] = date_time_str
+    df2 = df.rename(columns=columns_dict)
+    df_dates_only = df2[df2.columns[5:]]
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler()
+    df2_standardized = scaler.fit_transform(df_dates_only)
+    df2[df2.columns[5:]] = df2_standardized
+    return df2
 
 
 
