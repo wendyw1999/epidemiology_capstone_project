@@ -112,20 +112,79 @@ def calculate(s,i,r,population,learning_rate,iterations):
     return betas,ds
 
 def calculate_i_delta(infection,dic,county_name,us_confirmed_df):
-    for i in ["west","east","north","south"]:
-        if dic[county_name][i] == "border":
-            dic[county_name][i] = county_name
-    county_infection = infection[county_name]
-    lat_difference = calculate_lat_long_difference(dic[county_name]["west"],dic[county_name]["east"],us_confirmed_df)[0]
-    long_difference = calculate_lat_long_difference(dic[county_name]["north"],dic[county_name]["south"],us_confirmed_df)[1]
-    first_term = (infection[dic[county_name]["west"]] +infection[dic[county_name]["east"]]- 2*county_infection)/lat_difference**2
-    second_term = (infection[dic[county_name]["north"]]+infection[dic[county_name]["south"]] - 2*county_infection)/long_difference**2
-    return first_term + second_term
+    center_infected = infection[county_name]
+    north_county = dic[county_name]["north"]
+    south_county = dic[county_name]["south"]
+    
+    infected_dic = {} 
+    a = np.array(list(dic[county_name].values()))
+    li = ["north","south","west","east"]
+    if np.count_nonzero(a == "border") == 3:
+        
+        for side in li:
+            if dic[county_name][side]!="border":
+                only_neighbor_county = dic[county_name][side]
+                infected_dic[side] = infection[only_neighbor_county]
+                li.remove(side)
+                for k in li:
+                    infected_dic[k] = center_infected
+                    lat_difference = calculate_lat_long_difference(county_name,only_neighbor_county,us_confirmed_df)[0] * 2
+                    long_difference = calculate_lat_long_difference(county_name,only_neighbor_county,us_confirmed_df)[1] * 2
+        first_term = (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+        second_term =  (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+        
+        return first_term+second_term
+    
+    
+    
+    if (north_county == "border") & (south_county!="border"):
+        infected_dic["south"] = infection[south_county]
+        infected_dic["north"] = center_infected
+        long_difference = calculate_lat_long_difference(county_name,south_county,us_confirmed_df)[1] * 2 #times two, mirror the lat and long of opposite
+    elif (north_county != "border") & (south_county =="border"):
+        infected_dic["south"] = infection[north_county]
+        infected_dic["north"] = center_infected
+        long_difference = calculate_lat_long_difference(north_county,county_name,us_confirmed_df)[1] * 2 #times two, mirror the lat and long of opposite
+    elif (north_county != "border") & (south_county !="border"):
+        infected_dic["south"] = infection[south_county]
+        infected_dic["north"] = infection[north_county]
+        long_difference = calculate_lat_long_difference(north_county,south_county,us_confirmed_df)[1] #times two, mirror the lat and long of opposite
+        
+        
+    west_county = dic[county_name]["west"]
+    east_county = dic[county_name]["east"]
+    
+    
+    if (west_county == "border") & (east_county!="border"):
+        infected_dic["east"] = infection[east_county]
+        infected_dic["west"] = center_infected
+        lat_difference = calculate_lat_long_difference(county_name,east_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    elif (west_county != "border") & (east_county =="border"):
+        infected_dic["west"] = infection[west_county]
+        infected_dic["east"] = center_infected
+        lat_difference = calculate_lat_long_difference(county_name,west_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    elif (west_county != "border") & (east_county !="border"):
+        infected_dic["west"] = infection[west_county]
+        infected_dic["east"] = infection[east_county]
+        lat_difference = calculate_lat_long_difference(west_county,east_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    
+    
+    if "north" not in infected_dic.keys():
+        return (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+    if "west" not in infected_dic.keys():
+        return (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+    
+    
+    first_term = (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+    second_term =  (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+    return first_term+second_term
 
 def check_prediction(FIP_list,prediction_dic,us_confirmed_df,date):
     df = us_confirmed_df.loc[us_confirmed_df.FIPS.isin(FIP_list)]
-    df["predicted"] = df["FIPS"].replace(prediction_dic).apply(lambda x:int(x))
+    
+    df["predicted"] = df["FIPS"].replace(prediction_dic)
     df["percent_difference"] = (df["predicted"] - df[date]) / df[date]
+    df["predicted"] = df.predicted.astype(int)
     return df[["Admin2",date,"predicted","percent_difference"]]
 def calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date): 
     '''
@@ -134,19 +193,73 @@ def calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date):
     us_confirmed: dictionary containing infected case numbers for us to initialize our dictionary
     t2_date: the previous day (our prediction is based on), so we can look up the infection stats from the confirmed df
     '''
+    
     infected_dic = {}
-    for i in ["west","east","north","south"]:
-        if dic[county_name][i] == "border":
-            dic[county_name][i] = county_name
-        region_infected_t2 = us_confirmed_df.loc[us_confirmed_df.FIPS == dic[county_name][i]][t2_date].values[0]
-        infected_dic[i] = region_infected_t2
-    infected_dic["center"] = us_confirmed_df.loc[us_confirmed_df.FIPS == county_name][t2_date].values[0]
-    lat_difference = calculate_lat_long_difference(dic[county_name]["west"],dic[county_name]["east"],us_confirmed_df)[0]
-    long_difference = calculate_lat_long_difference(dic[county_name]["north"],dic[county_name]["south"],us_confirmed_df)[1]
-    first_term = (infected_dic["west"] + infected_dic["east"] - 2*infected_dic["center"])/lat_difference**2
-    second_term = (infected_dic["north"]+infected_dic["south"] - 2*infected_dic["center"])/long_difference**2
-    return first_term + second_term
-
+    
+    center_infected = us_confirmed_df.loc[us_confirmed_df.FIPS == county_name][t2_date].values[0]
+    infected_dic["center"] = center_infected
+    north_county = dic[county_name]["north"]
+    south_county = dic[county_name]["south"]
+    
+    
+    a = np.array(list(dic[county_name].values()))
+    li = ["north","south","west","east"]
+    if np.count_nonzero(a == "border") == 3:
+        
+        for side in li:
+            if dic[county_name][side]!="border":
+                only_neighbor_county = dic[county_name][side]
+                infected_dic[side] = us_confirmed_df.loc[us_confirmed_df.FIPS == only_neighbor_county][t2_date].values[0]
+                li.remove(side)
+                for k in li:
+                    infected_dic[k] = center_infected
+                    lat_difference = calculate_lat_long_difference(county_name,only_neighbor_county,us_confirmed_df)[0] * 2
+                    long_difference = calculate_lat_long_difference(county_name,only_neighbor_county,us_confirmed_df)[1] * 2
+        first_term = (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+        second_term =  (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+        
+        return first_term+second_term
+    if (north_county == "border") & (south_county!="border"):
+        infected_dic["south"] = us_confirmed_df.loc[us_confirmed_df.FIPS == south_county][t2_date].values[0]
+        infected_dic["north"] = center_infected
+        long_difference = calculate_lat_long_difference(county_name,south_county,us_confirmed_df)[1] * 2 #times two, mirror the lat and long of opposite
+    elif (north_county != "border") & (south_county =="border"):
+        infected_dic["south"] = us_confirmed_df.loc[us_confirmed_df.FIPS == north_county][t2_date].values[0]
+        infected_dic["north"] = center_infected
+        long_difference = calculate_lat_long_difference(north_county,county_name,us_confirmed_df)[1] * 2 #times two, mirror the lat and long of opposite
+    elif (north_county != "border") & (south_county !="border"):
+        infected_dic["south"] = us_confirmed_df.loc[us_confirmed_df.FIPS == south_county][t2_date].values[0]
+        infected_dic["north"] = us_confirmed_df.loc[us_confirmed_df.FIPS == north_county][t2_date].values[0]
+        long_difference = calculate_lat_long_difference(north_county,south_county,us_confirmed_df)[1] #times two, mirror the lat and long of opposite
+        
+        
+    west_county = dic[county_name]["west"]
+    east_county = dic[county_name]["east"]
+    
+    
+    if (west_county == "border") & (east_county!="border"):
+        infected_dic["east"] = us_confirmed_df.loc[us_confirmed_df.FIPS == east_county][t2_date].values[0]
+        infected_dic["west"] = center_infected
+        lat_difference = calculate_lat_long_difference(county_name,east_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    elif (west_county != "border") & (east_county =="border"):
+        infected_dic["west"] = us_confirmed_df.loc[us_confirmed_df.FIPS == west_county][t2_date].values[0]
+        infected_dic["east"] = center_infected
+        lat_difference = calculate_lat_long_difference(county_name,west_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    elif (west_county != "border") & (east_county !="border"):
+        infected_dic["west"] = us_confirmed_df.loc[us_confirmed_df.FIPS == west_county][t2_date].values[0]
+        infected_dic["east"] = us_confirmed_df.loc[us_confirmed_df.FIPS == east_county][t2_date].values[0]
+        lat_difference = calculate_lat_long_difference(west_county,east_county,us_confirmed_df)[0] * 2 #times two, mirror the lat and long of opposite
+    
+    #if at this point, north is still border, means that both north and south didn't have neighbors
+    if "north" not in infected_dic.keys():
+        print(county_name)
+        return (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+    if "west" not in infected_dic.keys():
+        return (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+    
+    first_term = (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
+    second_term =  (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
+    return first_term+second_term
 
 def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df,n=10):
     '''
@@ -164,7 +277,10 @@ def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df
     #initialization, initialize the dictionary, the values will be the infected cases in t2
     for county_name in dic.keys():
         infected_t2 =  us_confirmed_df.loc[us_confirmed_df.FIPS == county_name][t2_date].values[0]
-        m_t2 = us_mobility_df.loc[us_mobility_df.FIPS == county_name][t2_date].values[0]
+        try:
+            m_t2 = us_mobility_df.loc[us_mobility_df.FIPS == county_name][t2_date].values[0]
+        except:
+            m_t2 = us_mobility_df[t2_date].mean()
         mobility_dic[county_name] = m_t2
         
         #death_t2 = us_death_df.loc[us_death_df.FIPS == county_name][t2_date].values[0]
@@ -178,6 +294,9 @@ def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df
         second_term = -infected_t2/d
         third_term = beta * (infected_t2/population) * s_t2
         fourth_term = calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date) * m_t2
+        
+        
+            
         dic_predictions[county_name] = sum([first_term,sum([second_term,third_term,fourth_term])*dt])
     for i in range(n-1):
         def calculate_for_dt(dic_predictions,population_dict,mobility_dict,d,beta):
@@ -200,5 +319,3 @@ def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df
     
     
     return dic_predictions
-    #didn't have data for recovered
-        

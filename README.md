@@ -1,15 +1,26 @@
-# Fitting Epidemiology Model with Covid-19 JHU U.S. Data
-## Description of Data and Directories
+<p align="center">< img width=12.5% src="https://github.com/SHUYUAN66/epidemiology_capstone_project-main-2/blob/master/others/07.png"></p >
 
+# Using Epidemiology Model To Predict Case Numbers for COVID-19
+
+## Table of contents
+* [General info](#general-info)
+* [Technologies](#technologies)
+* [Setup](#setup)
+* [Directions](#directions)
+* [Processing](#in_processing)
+## General info
+- Use covid-19 datasets provided by JHU to fit epidemiology model to U.S.. After figuring out the infection parameter, we can then predict 
+
+## Introduction
+Fitting Epidemiology Model with Covid-19 JHU U.S. Data
+## Technology
+Project is created with:
+* Image : https://hub.docker.com/repository/docker/caw062/test
+## Setup
 - Before running, use `pip install -r requirements.txt` to install all the required packages
 - on terminal, run `python run.py data` to retrieve the most current data from JHU & Apple Data
 
-### Problem to Solve
-- Use covid-19 datasets provided by JHU to fit epidemiology model to U.S.. After figuring out the infection parameter, we can then predict 
-infected number for future.
-- [TODO] Using Apple's mobility data, we are able to fit a Bayesian model and use the model to predict future number of infected with new lockdowns/un-lockdowns. 
-
-
-## Data should not be touched at all times!
-# Directions
-`python run.py test` to start
+## Directions
+`python run.py test` to first download test data, and then build epidemiology model on the test data. 
+It will return the beta (infection rate), and D (infection duration) for the entire United States.
+It will also return a prediction for counties in Southern California on 1/22/2021 based on case counts on 1/21/2021 (previous day)

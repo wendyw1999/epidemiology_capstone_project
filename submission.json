@@ -1,4 +1,4 @@
 {
-    "dockerhub-id": "caw062/test:latest",
-    "repository-id": "https://github.com/wendyw1999/template.git"
+    "DockerHub Repository": "https://hub.docker.com/repository/docker/caw062/test/",
+    "GitHub Repository": "https://github.com/wendyw1999/epidemiology_capstone_project.git"
 }

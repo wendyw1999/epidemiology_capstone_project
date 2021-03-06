@@ -67,7 +67,9 @@ def calculate_lat_long_difference(county_FIP1,county_FIP2,us_confirmed_df):
     long_1 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP1]["Long_"].values[0]
     lat_2 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP2]["Lat"].values[0]
     long_2 = us_confirmed_df.loc[us_confirmed_df.FIPS == county_FIP2]["Long_"].values[0]
-    return (lat_1-lat_2,long_1-long_2)
+    return lat_1-lat_2,long_1-long_2   
+
+    
 def FIP_to_county_name(FIP,us_confirmed_df):
     df = us_confirmed_df.loc[us_confirmed_df.FIPS == FIP]
     county = df.Admin2.values[0]
