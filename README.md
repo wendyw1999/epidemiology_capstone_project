@@ -1,4 +1,4 @@
-<p align="center">< img width=12.5% src="https://github.com/SHUYUAN66/epidemiology_capstone_project-main-2/blob/master/others/07.png"></p >
+
 
 # Using Epidemiology Model To Predict Case Numbers for COVID-19
 
