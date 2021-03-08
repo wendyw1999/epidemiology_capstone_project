@@ -5,8 +5,12 @@ import matplotlib.pyplot as plt
 import os
 import json
 from datetime import datetime
+import requests
 
-
+def read_github_json_file(url):
+    resp = requests.get(url)
+    nearby_data = json.loads(resp.text)
+    return nearby_data
 def find_FIPs(county_name,us_confirmed_df,state_name = "California"):
     fips = us_confirmed_df[(us_confirmed_df.Admin2 == county_name) & (us_confirmed_df.Province_State == state_name)]["FIPS"].values[0]
     return str(fips)
@@ -115,6 +119,7 @@ def collect_data(path):
     write_list_to_txt(i_path,i)
     write_list_to_txt(r_path,r)
     write_list_to_txt(p_path,[p])
+    
     return path
 def standardize_FIPS(df):
     '''
@@ -254,4 +259,34 @@ def write_list_to_txt(filename,my_list):
         for item in my_list:
             f.write("%s\n" % item)
     print("txt file at:  "+filename)
+    
+
+def get_california_counties(county_list):
+    california = []
+    for county in county_list:
+        if "".join(county[:2]) == "06":
+            california.append(county)
+    return california
+def read_nearby_file(file_name):
+    '''
+    file_name:the file location of the nearby neighbors json file
+    returns: filtered dictionary, containing only california counties, also replace counties in the other state with "border"
+    '''
+    nearby_dict = read_github_json_file(file_name)
+    
+    county_list = list(nearby_dict.keys())
+    california_county_list = get_california_counties(county_list)
+    california_county_dict = {}
+
+    for county in nearby_dict.keys():
+        if county in california_county_list:
+            california_county_dict[county] = nearby_dict[county]
+    for key in california_county_dict.keys():
+        for subkey in california_county_dict[key].keys():
+            if list(california_county_dict[key][subkey])[:2]!=["0","6"]:
+                #print(ca_county_neighbors[key][subkey])
+                california_county_dict[key][subkey] = "border"
+    return california_county_dict
+
+            
 
