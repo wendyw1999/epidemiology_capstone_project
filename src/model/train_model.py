@@ -252,7 +252,6 @@ def calculate_delta_initialization(dic,county_name,us_confirmed_df,t2_date):
     
     #if at this point, north is still border, means that both north and south didn't have neighbors
     if "north" not in infected_dic.keys():
-        print(county_name)
         return (infected_dic["west"] + infected_dic["east"] - 2 * center_infected)/lat_difference ** 2
     if "west" not in infected_dic.keys():
         return (infected_dic["north"] + infected_dic["south"] - 2 * center_infected)/lat_difference ** 2
@@ -319,3 +318,5 @@ def calculate_i_t1(t2_date,dic,us_confirmed_df,beta,d,us_death_df,us_mobility_df
     
     
     return dic_predictions
+
+

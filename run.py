@@ -14,6 +14,22 @@ from src.model.predict_model import *
 from src.analysis.analysis import *
 
 def main(targets):
+    
+    with open('config/analysis_params.json') as fh:
+        eda_cfg =json.load(fh)
+    data_path = eda_cfg["test_data_path"]
+    output_path = eda_cfg["test_img_path"]
+    
+        
+    with open("config/data_params.json") as fh:
+        data_cfg = json.load(fh)   
+    nearbyjson = data_cfg["nearby_json"]
+        
+    with open("config/model_params.json") as fh:
+        model_cfg = json.load(fh)
+    date1 = model_cfg["curr_day"]
+    date2 = model_cfg["prediction_day"]
+    csv_result_path = model_cfg["output_csv_path"]
     if 'data' in targets:
         if not os.path.exists('data'):
             os.makedirs('data')
@@ -36,14 +52,17 @@ def main(targets):
         print("D is :   "+str(d))
         
         #Analysis and ploting
-        with open('config/analysis_params.json') as fh:
-            eda_cfg =json.load(fh)
-        data_path = eda_cfg["test_data_path"]
-        output_path = eda_cfg["test_img_path"]
+        
+        
+        
         draw_ODE(data_path,output_path,beta,d) #Generate a plot in the test  folder from data in the test/testdata folder
         
+        us_confirmed_df,us_death_df,global_recover_df,mobility = retrieve_data()
         
-        print("Mean Absolute Percentage Error" + str(print_prediction_error()))
+        prediction_df = get_prediction_df(nearbyjson,date1,date2,beta,d,us_confirmed_df,us_death_df,mobility)
+        print(prediction_df)
+        prediction_df.to_csv(csv_result_path)
+        #print("Mean Absolute Percentage Error" + str(print_prediction_error()))
         
     
     if 'model' in targets:
@@ -54,7 +73,7 @@ def main(targets):
               
         
             
-    #if 'eda' in targets:
+    
         
 
     return
